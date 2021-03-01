@@ -11,6 +11,7 @@ import (
 const (
 	queryGetAccessToken    = "SELECT access_token, user_id, client_id, expires FROM access_tokens WHERE access_token=?;"
 	queryCreateAccessToken = "INSERT INTO access_tokens(access_token, user_id, client_id, expires) VALUES (?, ?, ?, ?);"
+	queryUpdateExpires     = "UPDATE access_tokens SET expires=? WHERE access_token=?;"
 )
 
 // NewRepository will return a pointer to a dbRepository struct
@@ -22,6 +23,7 @@ func NewRepository() Repository {
 type Repository interface {
 	GetByID(string) (*accesstoken.AccessToken, *errors.RestErr)
 	Create(accesstoken.AccessToken) *errors.RestErr
+	UpdateExpirationTime(accesstoken.AccessToken) *errors.RestErr
 }
 
 type dbRepository struct {
@@ -60,5 +62,20 @@ func (dr *dbRepository) Create(at accesstoken.AccessToken) *errors.RestErr {
 		return errors.NewInternalServerError(err.Error())
 	}
 
+	return nil
+}
+
+func (dr *dbRepository) UpdateExpirationTime(at accesstoken.AccessToken) *errors.RestErr {
+	session, err := cassandra.GetSession()
+	if err != nil {
+		return errors.NewInternalServerError(err.Error())
+	}
+	defer session.Close()
+
+	if err := session.Query(queryGetAccessToken,
+		at.Expires,
+		at.AccessToken).Exec(); err != nil {
+		return errors.NewInternalServerError(err.Error())
+	}
 	return nil
 }
