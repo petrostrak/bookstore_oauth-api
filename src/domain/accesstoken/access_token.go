@@ -7,8 +7,34 @@ import (
 )
 
 const (
-	expirationTime = 24
+	expirationTime             = 24
+	grantTypePassword          = "password"
+	grantTypeClientCredentials = "client_credentials"
 )
+
+// AccessTokenRequest struct
+type AccessTokenRequest struct {
+	GrantType    string `json:"grant_type"`
+	Scope        string `json:"scope"`
+	Username     string `json:"username"`
+	Password     string `json:"password"`
+	ClientID     string `json:"client_id"`
+	ClientSecret string `json:"client_secret"`
+}
+
+// Validate validates the access token
+func (at *AccessTokenRequest) Validate() *errors.RestErr {
+	switch at.GrantType {
+	case grantTypePassword:
+		break
+	case grantTypeClientCredentials:
+		break
+	default:
+		return errors.NewBadRequestError("invalid grant_type parameter")
+	}
+	// TODO: validate parametes for each grant_type
+	return nil
+}
 
 // AccessToken struct
 type AccessToken struct {
